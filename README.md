@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Financial Dashboard
+
+A comprehensive financial monitoring and analysis dashboard that provides real-time insights into your banking and investment activities, with advanced projections to help you plan for the future.
+
+## Features
+
+- **Multi-Bank Integration**: Connect to multiple financial institutions including Atom Bank, Zopa, Tandem, Moneybox, Hargreaves Lansdown, HSBC, Revolut, and more
+- **Real-Time Analytics**: Track spending patterns, categorize transactions, and get detailed insights with interactive charts
+- **Cash Flow Projections**: Advanced forecasting to determine how long your savings will last and plan for different income scenarios
+- **Financial Runway Calculator**: Calculate exactly how long you can sustain yourself while building new business ventures
+- **Secure & Private**: Bank-level encryption for all sensitive financial data
+- **Smart Alerts**: Get notified when projected funds fall below thresholds or spending patterns change
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Charts**: Recharts
+- **Icons**: Heroicons
+- **Styling**: Tailwind CSS with Headless UI components
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- npm or yarn
+- Supabase account (for database and authentication)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd financial-dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env.local` and add your configuration:
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-## Learn More
+# Encryption Key for sensitive financial data
+ENCRYPTION_KEY=your_32_character_encryption_key
 
-To learn more about Next.js, take a look at the following resources:
+# Application Settings
+NEXT_PUBLIC_APP_URL=http://localhost:3001
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Open [http://localhost:3001](http://localhost:3001) in your browser.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/                    # Next.js app directory
+│   ├── dashboard/         # Dashboard pages
+│   ├── api/              # API routes
+│   └── globals.css       # Global styles
+├── components/           # Reusable UI components
+│   └── ui/              # Base UI components
+├── lib/                 # Utility libraries
+│   ├── supabase.ts      # Supabase client configuration
+│   └── utils.ts         # General utilities
+├── types/               # TypeScript type definitions
+├── utils/               # Utility functions
+│   ├── encryption.ts    # Data encryption utilities
+│   └── financial-calculations.ts  # Financial calculation functions
+└── hooks/               # Custom React hooks
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Security
+
+This application handles sensitive financial data and implements several security measures:
+
+- **Data Encryption**: All sensitive financial information is encrypted before storage
+- **Secure Authentication**: Uses Supabase Auth with Row Level Security (RLS)
+- **API Security**: Protected API routes with authentication middleware
+- **Environment Variables**: Sensitive configuration stored in environment variables
+
+## Financial Institution Integration
+
+The dashboard supports integration with various UK financial institutions:
+
+- Atom Bank
+- Zopa
+- Tandem
+- Moneybox
+- Hargreaves Lansdown
+- RCI Bank
+- Secure Trust Bank
+- HSBC
+- Revolut
+
+*Note: API integrations require appropriate API keys and permissions from each institution.*
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

@@ -39,3 +39,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Financial data (never commit sensitive financial information)
+/data/exports/
+/data/imports/
+/backups/
+*.csv
+*.xlsx
+*.xls
+
+# API keys and secrets (extra protection)
+**/secrets/
+**/*secret*
+**/*key*
+**/*credential*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
