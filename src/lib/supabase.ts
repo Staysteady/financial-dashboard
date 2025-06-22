@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -10,6 +9,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Server-side Supabase client for API routes
 export const createServerSupabaseClient = () => {
+  // Dynamically import cookies only when needed
+  const { cookies } = require('next/headers');
   const cookieStore = cookies();
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {

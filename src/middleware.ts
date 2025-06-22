@@ -60,11 +60,12 @@ export async function middleware(request: NextRequest) {
   );
 
   // Redirect unauthenticated users from protected routes to login
-  if (isProtectedRoute && !user) {
-    const redirectUrl = new URL('/auth/login', request.url);
-    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
+  // TODO: Re-enable once auth pages are created
+  // if (isProtectedRoute && !user) {
+  //   const redirectUrl = new URL('/auth/login', request.url);
+  //   redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
+  //   return NextResponse.redirect(redirectUrl);
+  // }
 
   // Redirect authenticated users from auth routes to dashboard
   if (isAuthRoute && user) {
