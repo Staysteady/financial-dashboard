@@ -12,6 +12,7 @@ CREATE TYPE budget_period AS ENUM ('monthly', 'quarterly', 'yearly');
 CREATE TYPE goal_category AS ENUM ('emergency_fund', 'investment', 'savings', 'debt_payoff', 'other');
 CREATE TYPE alert_type AS ENUM ('low_balance', 'high_spending', 'goal_milestone', 'projection_warning');
 CREATE TYPE theme_type AS ENUM ('light', 'dark', 'system');
+CREATE TYPE connection_status AS ENUM ('active', 'expired', 'revoked', 'error');
 
 -- User preferences table
 CREATE TABLE user_preferences (
@@ -146,6 +147,10 @@ CREATE INDEX idx_goals_user_id ON financial_goals(user_id);
 CREATE INDEX idx_projections_user_date ON cash_flow_projections(user_id, projection_date);
 CREATE INDEX idx_alerts_user_unread ON alerts(user_id, is_read);
 CREATE INDEX idx_categories_user_type ON categories(user_id, type);
+CREATE INDEX idx_bank_connections_user ON bank_connections(user_id);
+CREATE INDEX idx_bank_connections_status ON bank_connections(user_id, connection_status);
+CREATE INDEX idx_bank_connections_sync ON bank_connections(last_sync DESC);
+CREATE INDEX idx_bank_connections_user_bank ON bank_connections(user_id, bank_code);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -156,9 +161,28 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Bank connections table for API credentials
+CREATE TABLE bank_connections (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    bank_code VARCHAR(50) NOT NULL,
+    bank_name VARCHAR(200) NOT NULL,
+    account_identifier VARCHAR(100) NOT NULL, -- Masked account number
+    encrypted_credentials TEXT NOT NULL,
+    connection_status connection_status DEFAULT 'active',
+    last_sync TIMESTAMP WITH TIME ZONE,
+    next_sync_scheduled TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, bank_code)
+);
+
 -- Apply updated_at triggers
 CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON user_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_goals_updated_at BEFORE UPDATE ON financial_goals FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_bank_connections_updated_at BEFORE UPDATE ON bank_connections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

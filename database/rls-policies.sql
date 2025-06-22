@@ -10,6 +10,7 @@ ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_flow_projections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_connections ENABLE ROW LEVEL SECURITY;
 
 -- User Preferences Policies
 CREATE POLICY "Users can view their own preferences" ON user_preferences
@@ -137,4 +138,17 @@ CREATE POLICY "Users can update their own alerts" ON alerts
     FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own alerts" ON alerts
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Bank Connections Policies (Extra security for sensitive financial credentials)
+CREATE POLICY "Users can view their own bank connections" ON bank_connections
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own bank connections" ON bank_connections
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own bank connections" ON bank_connections
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own bank connections" ON bank_connections
     FOR DELETE USING (auth.uid() = user_id);
