@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { rateLimiter, RATE_LIMIT_CONFIGS } from '@/lib/rate-limiter';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -7,6 +8,12 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   });
+
+  // Apply rate limiting first for security
+  const rateLimitResult = await applyRateLimit(request);
+  if (rateLimitResult) {
+    return rateLimitResult;
+  }
 
   // Skip Supabase auth check if environment variables are not set (for testing)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -82,6 +89,56 @@ export async function middleware(request: NextRequest) {
   );
 
   return response;
+}
+
+// Apply rate limiting based on route
+async function applyRateLimit(request: NextRequest): Promise<Response | null> {
+  const pathname = request.nextUrl.pathname;
+  
+  // Determine rate limit configuration based on route
+  let configKey: keyof typeof RATE_LIMIT_CONFIGS = 'api_general';
+  
+  if (pathname.startsWith('/api/auth')) {
+    configKey = 'auth';
+  } else if (pathname.includes('/api/banking') || pathname.includes('/api/integrations')) {
+    configKey = 'banking_api';
+  } else if (pathname.includes('/api/export')) {
+    configKey = 'export';
+  } else if (pathname.includes('/api/upload')) {
+    configKey = 'upload';
+  } else if (pathname.includes('/reset-password')) {
+    configKey = 'password_reset';
+  } else if (pathname.includes('/verify-otp')) {
+    configKey = 'otp_verification';
+  } else if (!pathname.startsWith('/api/')) {
+    // Don't rate limit non-API routes as strictly
+    return null;
+  }
+
+  const config = RATE_LIMIT_CONFIGS[configKey];
+  const result = await rateLimiter.checkRateLimit(request, config);
+  
+  if (!result.success) {
+    return new Response(
+      JSON.stringify({
+        error: 'Rate limit exceeded',
+        message: 'Too many requests. Please try again later.',
+        retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
+      }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Limit': config.maxRequests.toString(),
+          'X-RateLimit-Remaining': result.remaining.toString(),
+          'X-RateLimit-Reset': Math.ceil(result.resetTime / 1000).toString(),
+          'Retry-After': Math.ceil((result.resetTime - Date.now()) / 1000).toString(),
+        },
+      }
+    );
+  }
+
+  return null;
 }
 
 export const config = {

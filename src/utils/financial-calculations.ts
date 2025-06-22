@@ -93,6 +93,81 @@ export function calculateBurnRate(transactions: Transaction[], months: number = 
 }
 
 /**
+ * Calculate enhanced burn rate with trend analysis
+ */
+export function calculateEnhancedBurnRate(
+  transactions: Transaction[], 
+  months: number = 12
+): {
+  currentRate: number;
+  trendingRate: number;
+  trend: 'improving' | 'worsening' | 'stable';
+  confidence: number;
+} {
+  const currentDate = new Date();
+  const monthlyRates: number[] = [];
+
+  for (let i = 0; i < months; i++) {
+    const targetMonth = subMonths(currentDate, i);
+    const income = calculateMonthlyIncome(transactions, targetMonth);
+    const expenses = calculateMonthlyExpenses(transactions, targetMonth);
+    const netFlow = income - expenses;
+    monthlyRates.push(Math.abs(Math.min(netFlow, 0)));
+  }
+
+  const recentRates = monthlyRates.slice(0, 3);
+  const olderRates = monthlyRates.slice(-3);
+  
+  const currentRate = recentRates.reduce((sum, rate) => sum + rate, 0) / recentRates.length;
+  const olderRate = olderRates.reduce((sum, rate) => sum + rate, 0) / olderRates.length;
+  
+  // Linear regression for trending rate
+  const trendingRate = calculateLinearTrend(monthlyRates.slice(0, 6));
+  
+  // Determine trend direction
+  const changePercent = olderRate > 0 ? ((currentRate - olderRate) / olderRate) * 100 : 0;
+  let trend: 'improving' | 'worsening' | 'stable' = 'stable';
+  
+  if (changePercent > 10) trend = 'worsening';
+  else if (changePercent < -10) trend = 'improving';
+  
+  // Calculate confidence based on data consistency
+  const variance = monthlyRates.reduce((sum, rate) => {
+    const avg = monthlyRates.reduce((s, r) => s + r, 0) / monthlyRates.length;
+    return sum + Math.pow(rate - avg, 2);
+  }, 0) / monthlyRates.length;
+  
+  const standardDeviation = Math.sqrt(variance);
+  const average = monthlyRates.reduce((sum, rate) => sum + rate, 0) / monthlyRates.length;
+  const confidence = Math.max(0, Math.min(100, 100 - (standardDeviation / average) * 100));
+
+  return {
+    currentRate,
+    trendingRate,
+    trend,
+    confidence
+  };
+}
+
+/**
+ * Calculate linear trend from array of values
+ */
+function calculateLinearTrend(values: number[]): number {
+  const n = values.length;
+  if (n < 2) return values[0] || 0;
+  
+  const xSum = n * (n - 1) / 2;
+  const ySum = values.reduce((sum, val) => sum + val, 0);
+  const xySum = values.reduce((sum, val, index) => sum + val * index, 0);
+  const x2Sum = n * (n - 1) * (2 * n - 1) / 6;
+  
+  const slope = (n * xySum - xSum * ySum) / (n * x2Sum - xSum * xSum);
+  const intercept = (ySum - slope * xSum) / n;
+  
+  return intercept + slope * (n - 1); // Projected next value
+}
+
+/**
  * Calculate financial runway (how long current balance will last)
  */
 export function calculateFinancialRunway(
@@ -101,6 +176,102 @@ export function calculateFinancialRunway(
 ): number {
   if (monthlyBurnRate <= 0) return Infinity;
   return currentBalance / monthlyBurnRate;
+}
+
+/**
+ * Calculate enhanced financial runway with multiple scenarios
+ */
+export function calculateEnhancedFinancialRunway(
+  accounts: Account[],
+  transactions: Transaction[],
+  emergencyFundMonths: number = 6
+): {
+  totalBalance: number;
+  emergencyFund: number;
+  availableBalance: number;
+  baselineRunway: number;
+  conservativeRunway: number;
+  optimisticRunway: number;
+  criticalThresholds: {
+    threeMonths: Date;
+    sixMonths: Date;
+    twelveMonths: Date;
+  };
+  recommendations: string[];
+} {
+  const totalBalance = accounts
+    .filter(acc => acc.is_active)
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
+  const burnRateData = calculateEnhancedBurnRate(transactions);
+  const emergencyFund = burnRateData.currentRate * emergencyFundMonths;
+  const availableBalance = Math.max(0, totalBalance - emergencyFund);
+
+  const baselineRunway = totalBalance / burnRateData.currentRate;
+  const conservativeRunway = availableBalance / (burnRateData.currentRate * 1.2);
+  const optimisticRunway = availableBalance / (burnRateData.currentRate * 0.8);
+
+  const currentDate = new Date();
+  const criticalThresholds = {
+    threeMonths: addMonths(currentDate, 3),
+    sixMonths: addMonths(currentDate, 6),
+    twelveMonths: addMonths(currentDate, 12)
+  };
+
+  const recommendations = generateFinancialRecommendations(
+    baselineRunway,
+    burnRateData,
+    totalBalance,
+    emergencyFund
+  );
+
+  return {
+    totalBalance,
+    emergencyFund,
+    availableBalance,
+    baselineRunway,
+    conservativeRunway,
+    optimisticRunway,
+    criticalThresholds,
+    recommendations
+  };
+}
+
+/**
+ * Generate personalized financial recommendations
+ */
+function generateFinancialRecommendations(
+  runway: number,
+  burnRateData: { trend: string; confidence: number },
+  balance: number,
+  emergencyFund: number
+): string[] {
+  const recommendations: string[] = [];
+
+  if (runway < 3) {
+    recommendations.push('URGENT: Less than 3 months runway - immediate action required');
+    recommendations.push('Consider emergency income sources or major expense reduction');
+  } else if (runway < 6) {
+    recommendations.push('WARNING: Low runway - focus on increasing income or reducing expenses');
+  }
+
+  if (balance < emergencyFund) {
+    recommendations.push('Build emergency fund to cover 6 months of expenses');
+  }
+
+  if (burnRateData.trend === 'worsening') {
+    recommendations.push('Spending trend is increasing - review and control expenses');
+  }
+
+  if (burnRateData.confidence < 50) {
+    recommendations.push('Income/expense patterns are inconsistent - create more predictable budget');
+  }
+
+  if (runway > 12) {
+    recommendations.push('Strong financial position - consider investment opportunities');
+  }
+
+  return recommendations;
 }
 
 /**

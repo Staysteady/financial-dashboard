@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { 
   BanknotesIcon,
-  PiggyBankIcon,
+  CurrencyDollarIcon,
   ChartBarIcon,
   EllipsisHorizontalIcon,
   EyeIcon,
@@ -41,7 +41,7 @@ const getAccountIcon = (type: Account['type']) => {
     case 'current':
       return BanknotesIcon;
     case 'savings':
-      return PiggyBankIcon;
+      return CurrencyDollarIcon;
     case 'investment':
       return ChartBarIcon;
     case 'credit':

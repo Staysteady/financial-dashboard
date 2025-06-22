@@ -1,10 +1,4 @@
-import { 
-  BanknotesIcon, 
-  ChartBarIcon, 
-  CreditCardIcon, 
-  ArrowTrendingUpIcon,
-  PlusIcon
-} from "@heroicons/react/24/outline";
+'use client';
 import { AccountOverview } from '@/components/ui/account-card';
 import { TransactionList } from '@/components/ui/transaction-list';
 import { 
@@ -15,6 +9,7 @@ import {
   CategoryTrendChart,
   QuickInsights 
 } from '@/components/ui/financial-charts';
+import { FinancialProjections } from '@/components/ui/financial-projections';
 
 export default function DashboardPage() {
   // Mock data for initial display
@@ -31,184 +26,153 @@ export default function DashboardPage() {
   const mockAccounts = [
     { 
       id: '1', 
-      name: 'HSBC Current Account', 
+      user_id: 'user1',
+      institution_name: 'HSBC',
+      account_name: 'HSBC Current Account', 
       balance: 2450.32, 
-      type: 'current' as const,
+      account_type: 'current' as const,
       currency: 'GBP',
-      lastUpdated: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-      isActive: true,
-      provider: 'HSBC',
-      accountNumber: '12345678',
-      sortCode: '40-01-23',
-      availableBalance: 2450.32,
-      change24h: 125.50,
-      changePercent: 5.4
+      last_updated: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
+      is_active: true,
+      api_connected: true,
+      created_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 15 * 60 * 1000).toISOString()
     },
     { 
       id: '2', 
-      name: 'Atom Bank Savings', 
+      user_id: 'user1',
+      institution_name: 'Atom Bank',
+      account_name: 'Atom Bank Savings', 
       balance: 15000.00, 
-      type: 'savings' as const,
+      account_type: 'savings' as const,
       currency: 'GBP',
-      lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      isActive: true,
-      provider: 'Atom Bank',
-      accountNumber: '87654321',
-      sortCode: '60-83-01',
-      change24h: 2.50,
-      changePercent: 0.02
+      last_updated: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+      is_active: true,
+      api_connected: true,
+      created_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     },
     { 
       id: '3', 
-      name: 'Zopa Savings', 
+      user_id: 'user1',
+      institution_name: 'Zopa',
+      account_name: 'Zopa Savings', 
       balance: 8500.00, 
-      type: 'savings' as const,
+      account_type: 'savings' as const,
       currency: 'GBP',
-      lastUpdated: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-      isActive: true,
-      provider: 'Zopa',
-      accountNumber: '11223344',
-      change24h: 1.85,
-      changePercent: 0.02
+      last_updated: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
+      is_active: true,
+      api_connected: true,
+      created_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
     },
     { 
       id: '4', 
-      name: 'Hargreaves Lansdown ISA', 
+      user_id: 'user1',
+      institution_name: 'Hargreaves Lansdown',
+      account_name: 'Hargreaves Lansdown ISA', 
       balance: 19800.00, 
-      type: 'investment' as const,
+      account_type: 'investment' as const,
       currency: 'GBP',
-      lastUpdated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      isActive: true,
-      provider: 'Hargreaves Lansdown',
-      accountNumber: '55667788',
-      change24h: -150.25,
-      changePercent: -0.75
+      last_updated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+      is_active: true,
+      api_connected: true,
+      created_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     },
     { 
       id: '5', 
-      name: 'Amex Credit Card', 
+      user_id: 'user1',
+      institution_name: 'American Express',
+      account_name: 'Amex Credit Card', 
       balance: -850.00, 
-      type: 'credit' as const,
+      account_type: 'credit' as const,
       currency: 'GBP',
-      lastUpdated: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-      isActive: true,
-      provider: 'American Express',
-      accountNumber: '99887766',
-      availableBalance: 5000.00,
-      change24h: -45.20,
-      changePercent: 5.6
+      last_updated: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+      is_active: true,
+      api_connected: true,
+      created_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
     }
   ];
 
-  const mockTransactions = [
-    {
-      id: '1',
-      date: '2024-01-15',
-      description: 'Grocery Shopping',
-      merchant: 'Tesco Express',
-      amount: 85.32,
-      currency: 'GBP',
-      type: 'expense' as const,
-      category: 'Groceries',
-      account: 'HSBC Current Account',
-      location: 'London, UK',
-      isRecurring: false,
-      tags: ['essential'],
-      status: 'completed' as const
-    },
-    {
-      id: '2',
-      date: '2024-01-15',
-      description: 'Salary Payment',
-      merchant: 'TechCorp Ltd',
-      amount: 3200.00,
-      currency: 'GBP',
-      type: 'income' as const,
-      category: 'Salary',
-      account: 'HSBC Current Account',
-      isRecurring: true,
-      tags: ['salary', 'monthly'],
-      status: 'completed' as const
-    },
-    {
-      id: '3',
-      date: '2024-01-14',
-      description: 'Utility Bill',
-      merchant: 'British Gas',
-      amount: 120.50,
-      currency: 'GBP',
-      type: 'expense' as const,
-      category: 'Bills',
-      account: 'HSBC Current Account',
-      isRecurring: true,
-      tags: ['bills', 'essential'],
-      status: 'completed' as const
-    },
-    {
-      id: '4',
-      date: '2024-01-14',
-      description: 'Coffee Shop',
-      merchant: 'Costa Coffee',
-      amount: 4.50,
-      currency: 'GBP',
-      type: 'expense' as const,
-      category: 'Food & Drink',
-      account: 'HSBC Current Account',
-      location: 'Central London',
-      status: 'completed' as const
-    },
-    {
-      id: '5',
-      date: '2024-01-13',
-      description: 'Netflix Subscription',
-      merchant: 'Netflix',
-      amount: 10.99,
-      currency: 'GBP',
-      type: 'expense' as const,
-      category: 'Entertainment',
-      account: 'HSBC Current Account',
-      isRecurring: true,
-      tags: ['subscription'],
-      status: 'completed' as const
-    },
-    {
-      id: '6',
-      date: '2024-01-12',
-      description: 'Fuel',
-      merchant: 'Shell',
-      amount: 75.20,
-      currency: 'GBP',
-      type: 'expense' as const,
-      category: 'Transport',
-      account: 'HSBC Current Account',
-      location: 'M25 Services',
-      status: 'completed' as const
-    },
-    {
-      id: '7',
-      date: '2024-01-12',
-      description: 'Freelance Payment',
-      merchant: 'Client ABC',
-      amount: 500.00,
-      currency: 'GBP',
-      type: 'income' as const,
-      category: 'Freelance',
-      account: 'HSBC Current Account',
-      tags: ['freelance'],
-      status: 'pending' as const
-    },
-    {
-      id: '8',
-      date: '2024-01-10',
-      description: 'Transfer to Savings',
-      amount: 500.00,
-      currency: 'GBP',
-      type: 'transfer' as const,
-      category: 'Savings',
-      account: 'HSBC Current Account',
-      status: 'completed' as const
+  // Generate more extensive mock transaction data for better projections
+  const generateMockTransactions = () => {
+    const transactions = [];
+    const categories = ['Groceries', 'Bills', 'Transport', 'Entertainment', 'Food & Drink', 'Shopping', 'Salary', 'Freelance'];
+    const merchants = ['Tesco', 'ASDA', 'British Gas', 'Shell', 'Costa Coffee', 'Netflix', 'Amazon', 'TechCorp Ltd'];
+    
+    // Generate transactions for the last 12 months
+    for (let month = 0; month < 12; month++) {
+      const baseDate = new Date();
+      baseDate.setMonth(baseDate.getMonth() - month);
+      
+      // Monthly salary
+      transactions.push({
+        id: `sal-${month}`,
+        account_id: '1',
+        amount: 3200 + (Math.random() - 0.5) * 400, // £3000-3400
+        currency: 'GBP',
+        description: 'Monthly Salary',
+        category: 'Salary',
+        date: new Date(baseDate.getFullYear(), baseDate.getMonth(), 25).toISOString(),
+        type: 'income' as const,
+        is_recurring: true,
+        merchant: 'TechCorp Ltd',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+      // Monthly expenses (15-25 transactions per month)
+      const expenseCount = 15 + Math.floor(Math.random() * 10);
+      for (let i = 0; i < expenseCount; i++) {
+        const day = 1 + Math.floor(Math.random() * 28);
+        const category = categories[Math.floor(Math.random() * (categories.length - 2))]; // Exclude Salary, Freelance
+        const amount = category === 'Bills' ? 80 + Math.random() * 200 : 
+                     category === 'Groceries' ? 20 + Math.random() * 150 :
+                     category === 'Transport' ? 10 + Math.random() * 100 :
+                     5 + Math.random() * 100;
+        
+        transactions.push({
+          id: `exp-${month}-${i}`,
+          account_id: '1',
+          amount: amount,
+          currency: 'GBP',
+          description: `${category} expense`,
+          category,
+          date: new Date(baseDate.getFullYear(), baseDate.getMonth(), day).toISOString(),
+          type: 'expense' as const,
+          is_recurring: category === 'Bills',
+          merchant: merchants[Math.floor(Math.random() * merchants.length)],
+          location: Math.random() > 0.5 ? 'London, UK' : undefined,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }
+      
+      // Occasional freelance income
+      if (Math.random() > 0.7) {
+        transactions.push({
+          id: `free-${month}`,
+          account_id: '1',
+          amount: 300 + Math.random() * 800,
+          currency: 'GBP',
+          description: 'Freelance Payment',
+          category: 'Freelance',
+          date: new Date(baseDate.getFullYear(), baseDate.getMonth(), 15).toISOString(),
+          type: 'income' as const,
+          is_recurring: false,
+          merchant: 'Client ABC',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }
     }
-  ];
+    
+    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  const mockTransactions = generateMockTransactions();
 
   const mockCategories = [
     { id: '1', name: 'Groceries' },
@@ -221,9 +185,37 @@ export default function DashboardPage() {
     { id: '8', name: 'Savings' }
   ];
 
-  const mockAccountOptions = mockAccounts.map(account => ({
+  // Transform mock accounts to match Account interface
+  const transformedAccounts = mockAccounts.map(account => ({
+    id: account.id,
+    name: account.account_name,
+    type: account.account_type,
+    balance: account.balance,
+    currency: account.currency,
+    lastUpdated: account.last_updated,
+    isActive: account.is_active,
+    provider: account.institution_name,
+  }));
+
+  const mockAccountOptions = transformedAccounts.map(account => ({
     id: account.id,
     name: account.name
+  }));
+
+  // Transform mock transactions to match Transaction interface
+  const transformedTransactions = mockTransactions.map(transaction => ({
+    id: transaction.id,
+    date: transaction.date,
+    description: transaction.description,
+    merchant: transaction.merchant,
+    amount: transaction.amount,
+    currency: transaction.currency,
+    type: transaction.type,
+    category: transaction.category,
+    account: mockAccountOptions.find(acc => acc.id === transaction.account_id)?.name || 'Unknown Account',
+    location: transaction.location,
+    isRecurring: transaction.is_recurring,
+    status: 'completed' as const, // Default status for mock data
   }));
 
   // Chart data
@@ -299,8 +291,8 @@ export default function DashboardPage() {
 
         {/* Accounts Overview */}
         <div className="mb-8">
-          <AccountOverview 
-            accounts={mockAccounts}
+          <AccountOverview
+            accounts={transformedAccounts}
             onAddAccount={() => console.log('Add account clicked')}
             onViewAccount={(accountId) => console.log('View account:', accountId)}
           />
@@ -309,7 +301,7 @@ export default function DashboardPage() {
         {/* Recent Transactions */}
         <div className="mb-8">
           <TransactionList
-            transactions={mockTransactions}
+            transactions={transformedTransactions}
             accounts={mockAccountOptions}
             categories={mockCategories}
             onTransactionClick={(transaction) => console.log('Transaction clicked:', transaction)}
@@ -341,6 +333,14 @@ export default function DashboardPage() {
             data={categoryTrendData} 
             categories={['Groceries', 'Bills', 'Transport', 'Entertainment']}
             height={350}
+          />
+        </div>
+
+        {/* Financial Projections */}
+        <div className="mb-8">
+          <FinancialProjections 
+            accounts={mockAccounts}
+            transactions={mockTransactions}
           />
         </div>
 

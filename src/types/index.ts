@@ -69,6 +69,27 @@ export interface FinancialGoal {
   updated_at: string;
 }
 
+export interface GoalProgress {
+  goal: FinancialGoal;
+  progressPercentage: number;
+  remainingAmount: number;
+  monthsRemaining: number;
+  monthlyTarget: number;
+  onTrack: boolean;
+  projectedCompletionDate: string;
+  recommendations: string[];
+}
+
+export interface GoalInsight {
+  totalGoalsValue: number;
+  completedGoals: number;
+  activeGoals: number;
+  averageProgress: number;
+  topCategory: string;
+  urgentGoals: FinancialGoal[];
+  achievableThisYear: FinancialGoal[];
+}
+
 export interface CashFlowProjection {
   id: string;
   user_id: string;
@@ -167,6 +188,164 @@ export interface BudgetFormData {
   period: Budget['period'];
   start_date: string;
   end_date?: string;
+}
+
+// Investment and portfolio types
+export interface Investment {
+  id: string;
+  user_id: string;
+  account_id: string;
+  symbol: string;
+  name: string;
+  type: 'stock' | 'bond' | 'etf' | 'mutual_fund' | 'crypto' | 'commodity' | 'real_estate' | 'other';
+  quantity: number;
+  purchase_price: number;
+  current_price: number;
+  purchase_date: string;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioSummary {
+  totalValue: number;
+  totalCost: number;
+  totalGainLoss: number;
+  totalGainLossPercentage: number;
+  dayChange: number;
+  dayChangePercentage: number;
+  diversification: PortfolioDiversification;
+  topPerformers: Investment[];
+  worstPerformers: Investment[];
+}
+
+export interface PortfolioDiversification {
+  byType: { [key: string]: { value: number; percentage: number } };
+  bySector: { [key: string]: { value: number; percentage: number } };
+  byRegion: { [key: string]: { value: number; percentage: number } };
+}
+
+export interface InvestmentPerformance {
+  investment: Investment;
+  currentValue: number;
+  gainLoss: number;
+  gainLossPercentage: number;
+  dayChange: number;
+  dayChangePercentage: number;
+  priceHistory: PriceHistoryPoint[];
+}
+
+export interface PriceHistoryPoint {
+  date: string;
+  price: number;
+  volume?: number;
+}
+
+export interface DebtPayoffPlan {
+  id: string;
+  user_id: string;
+  name: string;
+  strategy: 'snowball' | 'avalanche' | 'custom';
+  total_debt: number;
+  monthly_payment: number;
+  estimated_payoff_date: string;
+  interest_saved: number;
+  debts: DebtItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DebtItem {
+  id: string;
+  name: string;
+  balance: number;
+  minimum_payment: number;
+  interest_rate: number;
+  type: 'credit_card' | 'personal_loan' | 'mortgage' | 'student_loan' | 'auto_loan' | 'other';
+  account_id?: string;
+}
+
+export interface TaxCalculation {
+  id: string;
+  user_id: string;
+  tax_year: number;
+  income_categories: { [key: string]: number };
+  deductions: { [key: string]: number };
+  estimated_tax: number;
+  refund_amount: number;
+  quarterly_payments: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RetirementPlan {
+  id: string;
+  user_id: string;
+  name: string;
+  current_age: number;
+  retirement_age: number;
+  current_savings: number;
+  monthly_contribution: number;
+  expected_return: number;
+  inflation_rate: number;
+  retirement_goal: number;
+  projected_value: number;
+  shortfall: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CurrencyRate {
+  from_currency: string;
+  to_currency: string;
+  rate: number;
+  timestamp: string;
+}
+
+export interface SharedExpense {
+  id: string;
+  user_id: string;
+  transaction_id: string;
+  total_amount: number;
+  participants: ExpenseParticipant[];
+  split_method: 'equal' | 'percentage' | 'exact_amounts';
+  description: string;
+  settled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpenseParticipant {
+  user_id: string;
+  name: string;
+  email: string;
+  amount_owed: number;
+  amount_paid: number;
+  is_settled: boolean;
+}
+
+export interface Receipt {
+  id: string;
+  user_id: string;
+  transaction_id?: string;
+  image_url: string;
+  merchant_name?: string;
+  total_amount?: number;
+  currency?: string;
+  date?: string;
+  items: ReceiptItem[];
+  confidence_score: number;
+  manual_review: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReceiptItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  category?: string;
 }
 
 // User preferences

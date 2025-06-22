@@ -18,13 +18,26 @@ import {
   HomeIcon,
   PlusIcon,
   CalendarDaysIcon,
-  TrophyIcon
+  TrophyIcon,
+  ChartPieIcon,
+  CalculatorIcon,
+  ClockIcon,
+  ReceiptPercentIcon,
+  CurrencyDollarIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Accounts', href: '/dashboard/accounts', icon: BanknotesIcon },
   { name: 'Transactions', href: '/dashboard/transactions', icon: CreditCardIcon },
+  { name: 'Portfolio', href: '/dashboard/portfolio', icon: ChartPieIcon },
+  { name: 'Debt Payoff', href: '/dashboard/debt', icon: CalculatorIcon },
+  { name: 'Tax Calculator', href: '/dashboard/tax', icon: DocumentTextIcon },
+  { name: 'Retirement', href: '/dashboard/retirement', icon: ClockIcon },
+  { name: 'Currency', href: '/dashboard/currency', icon: CurrencyDollarIcon },
+  { name: 'Expenses', href: '/dashboard/expenses', icon: UsersIcon },
+  { name: 'Receipts', href: '/dashboard/receipts', icon: ReceiptPercentIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
   { name: 'Projections', href: '/dashboard/projections', icon: ArrowTrendingUpIcon },
   { name: 'Goals', href: '/dashboard/goals', icon: TrophyIcon },

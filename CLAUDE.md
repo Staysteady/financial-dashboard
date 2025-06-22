@@ -4,182 +4,278 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Development Server
-- `npm run dev` - Start development server with Turbopack on port 3001
-- `npm run dev:safe` - Check port availability before starting dev server
-- `npm run check-port` - Verify port 3001 is available
+```bash
+# Start development server (port 3001)
+npm run dev
 
-### Build & Production
-- `npm run build` - Build the Next.js application
-- `npm run start` - Start production server on port 3001
-- `npm run lint` - Run ESLint for code quality checks
+# Build production version
+npm run build
 
-### TypeScript
-- `npx tsc --noEmit` - Check TypeScript types without building
+# Start production server
+npm start
 
-### Testing
-Currently no testing framework is configured. The codebase lacks test files, test scripts, and testing dependencies.
+# Type checking
+npm run type-check
 
-## Architecture Overview
+# Lint checking
+npm run lint
 
-This is a Next.js 15 financial dashboard application with comprehensive banking API integration capabilities:
+# Testing
+npm test             # Run all tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npx playwright test  # Run Playwright e2e tests
+npm run test:e2e     # Run e2e tests  
+npm run test:e2e:ui  # Run e2e tests with UI mode
+npm run test:e2e:headed # Run e2e tests in headed mode
+npm run test:security # Run security tests
+npm run test:security:ui # Run security tests with UI
+npm run test:performance # Run performance tests
+npm run test:load     # Run load tests
 
-### Tech Stack
-- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
-- **Styling**: Tailwind CSS 4 with Headless UI components
-- **Database**: Supabase (PostgreSQL) with Row Level Security (RLS)
-- **Authentication**: Supabase Auth
-- **Charts**: Recharts for financial data visualization
-- **Encryption**: CryptoJS for sensitive financial data
-- **Banking APIs**: UK Open Banking v3.x compliance with OAuth2 flows
-
-### Project Structure
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── dashboard/         # Main dashboard interface
-│   ├── auth/              # Authentication pages (login, signup, callback)
-│   └── api/               # API routes
-├── components/            # Reusable UI components
-│   ├── auth/              # Authentication-related components
-│   └── ui/                # Base UI components (buttons, etc.)
-├── lib/                   # Core utilities and configurations
-│   ├── supabase.ts        # Supabase client configurations
-│   ├── database.ts        # Database operations and queries
-│   └── banking-api/       # Banking API integration framework
-│       ├── index.ts           # Main API exports and utilities
-│       ├── base-client.ts     # Abstract base client with rate limiting
-│       ├── open-banking-client.ts  # UK Open Banking implementation
-│       ├── bank-adapter-manager.ts # Multi-bank adapter management
-│       ├── connection-manager.ts   # Bank connection lifecycle
-│       ├── credential-storage.ts   # Encrypted credential storage
-│       └── csv-import.ts          # Manual data import fallback
-├── types/                 # TypeScript type definitions
-│   └── banking-api.ts     # Banking API type definitions
-├── utils/                 # Utility functions
-│   ├── encryption.ts      # Data encryption/decryption
-│   ├── financial-calculations.ts  # Financial computation functions
-│   └── security.ts        # Security utilities
-└── hooks/                 # Custom React hooks
+# Development utilities
+npm run clean        # Clean .next and other build artifacts
+npm run db:migrate   # Run database migrations (when implemented)
+npm run db:seed      # Seed database with sample data (when implemented)
 ```
 
-### Banking API Integration Framework
+## Tech Stack & Architecture
 
-The application includes a comprehensive banking API integration system:
+### Core Framework
+- **Next.js 15** with App Router and React 19
+- **TypeScript 5** with strict configuration
+- **Tailwind CSS 4** with Headless UI components
+- **Supabase** (PostgreSQL) with Row Level Security
 
-#### Key Components
-- **Base Client** (`base-client.ts`): Abstract API client with rate limiting (10 req/min), exponential backoff retry logic, and timeout management
-- **Open Banking Client** (`open-banking-client.ts`): UK Open Banking v3.x implementation with OAuth2 PKCE flows
-- **Bank Adapter Manager** (`bank-adapter-manager.ts`): Manages multiple bank-specific adapters for different institutions
-- **Connection Manager** (`connection-manager.ts`): Handles complete bank connection lifecycle, token refresh, and data synchronization
-- **Credential Storage** (`credential-storage.ts`): Secure storage with AES-256 encryption and user-specific keys
-- **CSV Import Service** (`csv-import.ts`): Manual data import fallback with configurable parsing
-
-#### Security Features
-- User-specific encryption keys with PBKDF2 key derivation (10,000 iterations)
-- Automatic token refresh and expiration handling
-- Encrypted credential storage with integrity checking
-- Rate limiting and retry mechanisms for API stability
-- Secure credential lifecycle management with rotation capabilities
-
-#### Supported Operations
-- OAuth2 authentication flows with multiple UK banks
-- Account and balance synchronization
-- Transaction import with deduplication
-- CSV data import as fallback option
-- Connection status monitoring and error handling
+### Key Dependencies
+- **UI/Visualization**: Recharts, Headless UI, Heroicons, Lucide React
+- **Forms**: React Hook Form with Zod validation
+- **Date Handling**: date-fns (critical for financial calculations)
+- **Security**: CryptoJS for AES-256 encryption
+- **Utilities**: clsx, tailwind-merge via cn() helper
 
 ### Database Schema
-The application uses a comprehensive PostgreSQL schema with the following main tables:
-- `accounts` - Financial accounts (savings, current, investment, etc.)
-- `transactions` - Financial transactions with categorization
-- `categories` - Transaction categories with hierarchical structure
-- `budgets` - Budget management with different periods
-- `financial_goals` - Goal tracking (emergency fund, savings, etc.)
-- `cash_flow_projections` - Future balance projections
-- `alerts` - User notifications and warnings
-- `user_preferences` - User settings and preferences
-- `bank_connections` - Encrypted banking credentials and connection status
+Comprehensive PostgreSQL schema with:
+- Custom ENUM types: `account_type`, `transaction_type`, `goal_type`, `alert_type`
+- Core tables: `accounts`, `transactions`, `categories`, `budgets`, `financial_goals`, `alerts`, `api_connections`, `user_settings`
+- Security: RLS policies on all tables, encrypted sensitive data
+- Relationships: Proper foreign keys and constraints
 
-### Authentication & Security
-- Uses Supabase Auth with server-side rendering support
-- Row Level Security (RLS) policies protect user data
-- Sensitive financial data is encrypted using CryptoJS before storage
-- Banking API credentials are encrypted with user-specific keys
-- Security headers configured in middleware
-- OAuth2 flows with PKCE for banking authentication
+## Project Structure
 
-### Key Financial Features
-- Multi-bank account aggregation via APIs and CSV import
-- Real-time transaction synchronization with deduplication
-- Automatic transaction categorization
-- Cash flow projections and runway calculations
-- Spending pattern analysis and anomaly detection
-- Budget tracking and goal management
-- Comprehensive financial dashboard with live data
-
-### Important Patterns
-- Server-side Supabase client creation using `createServerSupabaseClient()`
-- Banking API client instantiation via `BankConnectionManager`
-- Encrypted credential storage with automatic key rotation
-- Type-safe database operations with comprehensive error handling
-- Rate-limited API calls with exponential backoff retry
-- OAuth2 state management for secure bank authentication
-- Financial calculations using `date-fns` for date manipulation
-
-### Environment Variables Required
 ```
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-# Encryption Key for sensitive financial data
-ENCRYPTION_KEY=your_32_character_encryption_key
-
-# Financial Institution API Keys (when available)
-ATOM_BANK_API_KEY=
-ZOPA_API_KEY=
-TANDEM_API_KEY=
-MONEYBOX_API_KEY=
-HARGREAVES_LANSDOWN_API_KEY=
-
-# Application Settings
-NEXT_PUBLIC_APP_URL=http://localhost:3001
+src/
+├── app/                 # Next.js App Router pages
+│   ├── (auth)/         # Authentication routes
+│   ├── dashboard/      # Main dashboard pages
+│   └── api/            # API routes (currently empty - needs implementation)
+├── components/
+│   ├── ui/             # Reusable UI components
+│   └── forms/          # Form components
+├── lib/
+│   ├── supabase/       # Database client and utilities
+│   ├── banking/        # Banking API integration
+│   ├── security/       # Encryption and security utilities
+│   └── utils.ts        # Common utilities (cn helper, etc.)
+└── types/              # TypeScript type definitions
 ```
 
-## Development Notes
+## Banking API Integration
 
-### Authentication Middleware
-- Middleware is configured in `src/middleware.ts` with authentication protection for `/dashboard` routes
-- Auth protection is currently **disabled** for development (see TODO comments in middleware)
-- Re-enable auth protection after creating authentication pages (`/auth/login`, `/auth/signup`)
+### Supported UK Banking APIs
+- **Open Banking v3.x** compliant implementations
+- **Major institutions**: HSBC, Atom Bank, Zopa, Tandem, Hargreaves Lansdown
+- **OAuth2 PKCE flows** for secure authentication
+- **Fallback CSV import** when API connections unavailable
 
-### Banking API Integration
-- Use `BankConnectionManager` for all banking operations - handles connection lifecycle, token management, and data sync
-- Banking credentials are automatically encrypted before storage using user-specific keys
-- Rate limiting is built into the base client (10 requests/minute default with exponential backoff)
-- All banking operations return standardized `ApiResponse<T>` types for consistent error handling
+### Security Architecture
+- **User-specific encryption**: Each user has unique encryption keys
+- **PBKDF2 key derivation** with 10,000 iterations
+- **AES-256 encryption** for banking credentials
+- **Rate limiting** and retry logic for API calls
+- **Connection health monitoring** and automatic token refresh
+
+### Key Classes
+- `BankConnectionManager`: Manages banking API connections
+- `EncryptionService`: Handles sensitive data encryption
+- Bank-specific adapters in `src/lib/banking/adapters/`
+
+## Component Architecture
+
+### UI Components (src/components/ui/)
+All components follow consistent patterns:
+- TypeScript interfaces for props
+- Responsive design with Tailwind
+- Consistent error handling and loading states
+- Integration with Recharts for financial visualizations
+
+### Key Components
+- **Dashboard Components**: `account-overview.tsx`, `transaction-list.tsx`, `balance-chart.tsx`
+- **Analysis Tools**: `spending-analysis.tsx`, `budget-comparison.tsx`, `merchant-location-analysis.tsx`
+- **Financial Tools**: `categorization.tsx`, `pattern-detection.tsx`, `spending-trends-insights.tsx`
+
+## Development Patterns
+
+### API Response Handling
+```typescript
+// Standard API response type
+interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  success: boolean;
+}
+```
 
 ### Database Operations
-- Always use `createServerSupabaseClient()` for server-side operations (API routes, server components)
-- Use the standard `supabase` client for client-side operations
-- RLS policies automatically protect user data - no additional user filtering needed in queries
-- Database schema changes require updating both `/database/schema.sql` and `/database/rls-policies.sql`
+```typescript
+// Server-side Supabase client creation
+import { createServerClient } from '@/lib/supabase/server';
 
-### Financial Data Security
-- All sensitive financial data is encrypted using AES-256 before database storage
-- Banking API credentials use user-specific encryption keys derived with PBKDF2
-- Environment variable `ENCRYPTION_KEY` must be exactly 32 characters for AES-256
-- Never store unencrypted financial data or API credentials
+const supabase = createServerClient();
+```
 
-### Key Development Patterns
-- Financial calculations use `date-fns` for reliable date manipulation
-- Banking API responses are normalized to common interfaces before storage
-- CSV import provides fallback when API connections are unavailable
-- All banking operations include transaction deduplication by `external_id`
+### Banking Integration
+```typescript
+// Secure banking API calls
+const bankManager = new BankConnectionManager();
+const accounts = await bankManager.getAccounts(userId, connectionId);
+```
 
-### Port Configuration
-- Development server runs on port 3001 to avoid conflicts
-- Use `npm run check-port` to verify port availability before starting
-- `npm run dev:safe` combines port checking with server startup
+### Encryption for Sensitive Data
+```typescript
+// Encrypt banking credentials
+const encryptionService = new EncryptionService();
+const encryptedCredentials = await encryptionService.encrypt(credentials, userKey);
+```
+
+## Security Considerations
+
+### Authentication & Authorization
+- Supabase Auth with email/password
+- Row Level Security (RLS) on all database tables
+- Protected routes via middleware (currently disabled for development)
+
+### Data Protection
+- Banking credentials encrypted with user-specific keys
+- Sensitive transaction data properly secured
+- Audit logging for financial data access
+- Secure headers configured in Next.js config
+
+### Banking Compliance
+- Open Banking security standards compliance
+- PSD2 directive compliance for EU users
+- Proper OAuth2 PKCE implementation
+- Secure credential storage and transmission
+
+## Known Development Notes
+
+### Current State
+- **Dashboard implemented** with comprehensive charts and mock data
+- **Authentication framework** in place but middleware disabled for development
+- **Empty API routes** - requires implementation for production use
+- **Testing framework configured** with Jest and comprehensive unit tests for utility functions
+
+### Important Files
+- `middleware.ts`: Authentication middleware (disabled for development)
+- `database/schema.sql`: Complete database schema with RLS policies
+- `src/lib/banking-api/`: Banking API integration framework
+- `src/utils/`: Encryption and security utilities
+- `jest.config.js`: Jest configuration for testing
+
+### Mock Data
+- Most components use sample/mock data for development
+- Transaction data generated with realistic UK banking patterns
+- Category system includes comprehensive UK spending categories
+
+## Financial Calculations
+
+### Date Handling
+- Always use `date-fns` for financial date calculations
+- Handle timezone considerations for transaction processing
+- Proper handling of financial periods (monthly, yearly cycles)
+
+### Currency Formatting
+- Standard UK formatting: `new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })`
+- Consistent rounding for financial calculations
+- Handle negative values properly for expenses vs income
+
+### Chart Configuration
+- Recharts for all financial visualizations
+- Consistent color schemes across components
+- Responsive design for mobile financial data viewing
+- Proper tooltip formatting for financial data
+
+## Testing Strategy
+
+### Unit Tests
+- **Framework**: Jest with TypeScript support
+- **Coverage**: Utility functions, financial calculations, security functions
+- **Location**: `src/**/__tests__/**/*.test.ts`
+- **Run**: `npm test` or `npm run test:watch`
+
+### Test Structure
+```bash
+src/
+├── lib/__tests__/
+│   └── utils.test.ts           # UI utility functions
+├── utils/__tests__/
+│   ├── financial-calculations.test.ts  # Financial calculations
+│   ├── security.test.ts        # Security and validation utilities
+│   └── encryption.test.ts      # Encryption and data protection
+├── services/__tests__/
+│   └── data-validator-simple.test.ts  # Data validation concepts
+└── app/api/__tests__/
+    ├── setup.ts                # API test setup and mocks
+    ├── export-transactions.test.ts     # Transaction export API tests
+    ├── export-accounts.test.ts         # Account export API tests
+    ├── export-financial-summary.test.ts # Financial summary API tests
+    ├── webhooks.test.ts                # Webhook integration tests
+    └── external-integrations.test.ts   # External API integration tests
+```
+
+### Testing Best Practices
+- **Pure functions first**: Focus on deterministic functions with no side effects
+- **Edge cases**: Test boundary conditions, empty inputs, invalid data
+- **Error handling**: Ensure functions handle invalid inputs gracefully
+- **Mock external dependencies**: Database calls, file system, crypto libraries
+- **Financial accuracy**: Verify calculations match expected business logic
+
+### Test Coverage
+- ✅ **Utility functions**: Formatting, validation, text processing (39 tests passing)
+- ✅ **Security functions**: Encryption, hashing, input sanitization
+- ✅ **Financial calculations**: Burn rate, projections, trend analysis
+- ✅ **API endpoints**: Integration tests for all endpoints (120+ tests)
+  - Transaction export API (CSV/JSON formats)
+  - Account export API (with transaction counts)
+  - Financial summary API (with trends and metrics)
+  - Webhook integration (transaction/account/alert events)
+  - External API integrations (portfolio, spending insights, health score)
+- ✅ **User flows**: End-to-end tests with Playwright (comprehensive test suite created)
+  - Authentication flows (sign-in, sign-up, validation)
+  - Dashboard navigation and responsiveness  
+  - Transaction management and filtering
+  - Analytics and chart interactions
+  - Account management and connections
+  - Financial goals tracking and creation
+  - Smoke tests for critical paths
+  - Mobile and accessibility testing
+
+## Banking Integration Best Practices
+
+### Connection Management
+- Always check connection health before API calls
+- Implement proper retry logic with exponential backoff
+- Handle token refresh automatically
+- Graceful fallback to manual data entry
+
+### Data Synchronization
+- Incremental transaction sync to avoid duplicates
+- Proper handling of pending vs completed transactions
+- Account balance reconciliation
+- Transaction categorization after import
+
+### Error Handling
+- Banking API specific error codes
+- User-friendly error messages for banking failures
+- Proper logging without exposing sensitive data
+- Fallback mechanisms for critical operations

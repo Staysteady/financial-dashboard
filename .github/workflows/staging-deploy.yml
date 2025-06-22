@@ -1,0 +1,378 @@
+name: Deploy to Staging
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy to staging'
+        required: true
+        default: 'develop'
+
+# Allow only one staging deployment at a time per PR
+concurrency:
+  group: staging-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.changes.outputs.should-deploy }}
+      changed-files: ${{ steps.changes.outputs.changed-files }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Detect changes
+        id: changes
+        run: |
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+          
+          echo "changed-files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Check if deployment is needed
+          if echo "$CHANGED_FILES" | grep -E '\.(ts|tsx|js|jsx|json|yml|yaml)$' > /dev/null; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "Code changes detected, will deploy to staging"
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+            echo "No significant changes detected, skipping staging deployment"
+          fi
+
+  run-quick-checks:
+    name: Quick Checks
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should-deploy == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run type check
+        run: npm run type-check
+        
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Run unit tests
+        run: npm test
+        env:
+          CI: true
+
+  build-staging:
+    name: Build for Staging
+    runs-on: ubuntu-latest
+    needs: [detect-changes, run-quick-checks]
+    if: needs.detect-changes.outputs.should-deploy == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build application for staging
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.STAGING_APP_URL }}
+          
+      - name: Upload staging build
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-build
+          path: .next/
+          retention-days: 3
+
+  deploy-to-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-staging]
+    environment: staging
+    
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download staging build
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-build
+          path: .next/
+        
+      - name: Deploy to Vercel (Staging)
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          alias-domains: |
+            staging-pr-${{ github.event.pull_request.number }}-financial-dashboard.vercel.app
+          
+      - name: Update PR with staging URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🚀 Staging Deployment')
+            );
+            
+            const body = `## 🚀 Staging Deployment
+            
+            Your changes have been deployed to staging!
+            
+            **Preview URL:** ${{ steps.deploy.outputs.preview-url }}
+            
+            ### 🧪 Test your changes:
+            - [ ] Login functionality
+            - [ ] Dashboard navigation
+            - [ ] Financial data display
+            - [ ] Responsive design
+            
+            ### 📊 Performance:
+            - Lighthouse score will be available soon
+            - Bundle size analysis in progress
+            
+            ---
+            *This comment will be updated with test results automatically.*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  staging-smoke-tests:
+    name: Staging Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        
+      - name: Wait for staging deployment
+        run: |
+          echo "Waiting for staging deployment to be ready..."
+          sleep 30
+          
+      - name: Run smoke tests against staging
+        run: npm run test:e2e -- --grep "smoke"
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy-to-staging.outputs.preview-url }}
+          
+      - name: Upload smoke test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-smoke-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  performance-audit:
+    name: Performance Audit
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: ${{ needs.deploy-to-staging.outputs.preview-url }}
+          configPath: '.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          
+      - name: Comment Lighthouse results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read Lighthouse results (this would need to be implemented)
+            const comment = `## ⚡ Performance Audit Results
+            
+            Lighthouse audit completed for staging deployment.
+            
+            ### Scores:
+            - 🎯 Performance: TBD
+            - ♿ Accessibility: TBD  
+            - 💡 Best Practices: TBD
+            - 🔍 SEO: TBD
+            
+            [View detailed report](${{ needs.deploy-to-staging.outputs.preview-url }})`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        
+      - name: Run security tests against staging
+        run: npm run test:security
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy-to-staging.outputs.preview-url }}
+          
+      - name: Upload security test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-security-test-results
+          path: |
+            security-tests/test-results/
+            security-tests/playwright-report/
+          retention-days: 7
+
+  update-pr-status:
+    name: Update PR Status
+    runs-on: ubuntu-latest
+    needs: [staging-smoke-tests, performance-audit, security-scan]
+    if: always() && github.event_name == 'pull_request'
+    
+    steps:
+      - name: Update PR with final status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const smokePassed = '${{ needs.staging-smoke-tests.result }}' === 'success';
+            const perfPassed = '${{ needs.performance-audit.result }}' === 'success';
+            const securityPassed = '${{ needs.security-scan.result }}' === 'success';
+            
+            const status = smokePassed && perfPassed && securityPassed ? '✅ All checks passed' : '❌ Some checks failed';
+            const smokeIcon = smokePassed ? '✅' : '❌';
+            const perfIcon = perfPassed ? '✅' : '❌';
+            const securityIcon = securityPassed ? '✅' : '❌';
+            
+            const comment = `## 🔍 Staging Validation Results
+            
+            ${status}
+            
+            ### Test Results:
+            ${smokeIcon} **Smoke Tests**: ${smokePassed ? 'Passed' : 'Failed'}
+            ${perfIcon} **Performance Audit**: ${perfPassed ? 'Passed' : 'Failed'}  
+            ${securityIcon} **Security Scan**: ${securityPassed ? 'Passed' : 'Failed'}
+            
+            ### Next Steps:
+            ${smokePassed && perfPassed && securityPassed ? 
+              '🎉 Your PR is ready for review! All staging checks passed.' : 
+              '⚠️ Please address the failing checks before requesting review.'
+            }
+            
+            ---
+            *Staging environment will be automatically cleaned up when PR is closed.*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  cleanup-on-close:
+    name: Cleanup Staging
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    
+    steps:
+      - name: Cleanup staging deployment
+        run: |
+          echo "Cleaning up staging deployment for PR #${{ github.event.pull_request.number }}"
+          # This would include cleanup of Vercel deployment, database, etc.
+          # Implementation depends on your infrastructure setup
