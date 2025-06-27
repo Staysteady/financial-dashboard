@@ -8,16 +8,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Start development server (port 3001)
 npm run dev
 
-# Build production version
+# Build production version  
 npm run build
 
 # Start production server
 npm start
 
-# Type checking
+# Type checking (ALWAYS run before committing)
 npm run type-check
 
-# Lint checking
+# Lint checking (ALWAYS run before committing)
 npm run lint
 
 # Testing
@@ -34,6 +34,8 @@ npm run test:performance # Run performance tests
 npm run test:load     # Run load tests
 
 # Development utilities
+npm run check-port   # Check if port 3001 is available
+npm run dev:safe     # Check port and start dev server safely
 npm run clean        # Clean .next and other build artifacts
 npm run db:migrate   # Run database migrations (when implemented)
 npm run db:seed      # Seed database with sample data (when implemented)
@@ -92,8 +94,16 @@ src/
 - **User-specific encryption**: Each user has unique encryption keys
 - **PBKDF2 key derivation** with 10,000 iterations
 - **AES-256 encryption** for banking credentials
-- **Rate limiting** and retry logic for API calls
+- **Rate limiting**: Route-specific limits configured in middleware.ts
+  - API general: 100 requests/15min
+  - Auth: 5 requests/15min  
+  - Banking API: 20 requests/5min
+  - Export: 10 requests/hour
+  - Upload: 5 requests/15min
+  - Password reset: 3 requests/hour
+  - OTP verification: 10 requests/15min
 - **Connection health monitoring** and automatic token refresh
+- **Security headers**: CSP, X-Frame-Options, etc. configured in Next.js
 
 ### Key Classes
 - `BankConnectionManager`: Manages banking API connections
@@ -167,6 +177,24 @@ const encryptedCredentials = await encryptionService.encrypt(credentials, userKe
 - Proper OAuth2 PKCE implementation
 - Secure credential storage and transmission
 
+## Development Workflow
+
+### Pre-commit Checklist
+1. **ALWAYS run type checking**: `npm run type-check`
+2. **ALWAYS run linting**: `npm run lint`
+3. **Run relevant tests**: `npm test` for changed utilities, `npx playwright test` for UI changes
+4. **Check port conflicts**: Use `npm run dev:safe` instead of `npm run dev`
+
+### Port Configuration
+- **Development server**: Port 3001 (configured in package.json and Next.js config)
+- **Port conflicts**: Run `npm run check-port` to verify port availability
+- **Netlify/Vercel**: Automatic port detection on deployment
+
+### Authentication State
+- **Middleware**: Auth checks currently disabled for development (see middleware.ts:71-75)  
+- **Testing**: Most routes accessible without authentication during development
+- **Production**: Uncomment auth middleware for production deployment
+
 ## Known Development Notes
 
 ### Current State
@@ -176,11 +204,12 @@ const encryptedCredentials = await encryptionService.encrypt(credentials, userKe
 - **Testing framework configured** with Jest and comprehensive unit tests for utility functions
 
 ### Important Files
-- `middleware.ts`: Authentication middleware (disabled for development)
+- `middleware.ts`: Authentication middleware with rate limiting (auth disabled for dev)
 - `database/schema.sql`: Complete database schema with RLS policies
 - `src/lib/banking-api/`: Banking API integration framework
 - `src/utils/`: Encryption and security utilities
 - `jest.config.js`: Jest configuration for testing
+- `playwright.config.ts`: E2E testing configuration with mobile support
 
 ### Mock Data
 - Most components use sample/mock data for development
@@ -279,3 +308,22 @@ src/
 - User-friendly error messages for banking failures
 - Proper logging without exposing sensitive data
 - Fallback mechanisms for critical operations
+
+## Performance & Monitoring
+
+### Sentry Integration
+- **Error tracking**: Configured with Next.js plugin in `next.config.ts`
+- **Source maps**: Hidden in production, uploaded to Sentry
+- **Environment**: Automatic Vercel monitors enabled
+- **Configuration**: Set `SENTRY_ORG` and `SENTRY_PROJECT` environment variables
+
+### Next.js Optimizations
+- **Turbopack**: Enabled for faster development builds (`npm run dev`)
+- **Package imports**: Optimized for `@heroicons/react` and `lucide-react`
+- **Security headers**: Configured in `next.config.ts`
+- **Port binding**: Defaults to 3001 for development
+
+### Testing Performance
+- **Load tests**: `npm run test:load` (Playwright-based)
+- **Performance tests**: `npm run test:performance`
+- **E2E coverage**: Cross-browser testing (Chrome, Firefox, Safari, Mobile)

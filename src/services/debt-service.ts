@@ -15,9 +15,9 @@ export interface DebtAnalysis {
   totalDebt: number;
   totalMinimumPayment: number;
   weightedAverageAPR: number;
-  highestAPR: DebtItem;
-  lowestAPR: DebtItem;
-  highestBalance: DebtItem;
+  highestAPR: DebtItem | null;
+  lowestAPR: DebtItem | null;
+  highestBalance: DebtItem | null;
 }
 
 export class DebtService {
@@ -44,20 +44,20 @@ export class DebtService {
   analyzeDebts(debts: DebtItem[]): DebtAnalysis {
     const totalDebt = debts.reduce((sum, debt) => sum + debt.balance, 0);
     const totalMinimumPayment = debts.reduce((sum, debt) => sum + debt.minimum_payment, 0);
-    
+
     const weightedInterest = debts.reduce((sum, debt) => sum + (debt.balance * debt.interest_rate), 0);
     const weightedAverageAPR = totalDebt > 0 ? weightedInterest / totalDebt : 0;
-    
+
     const sortedByAPR = [...debts].sort((a, b) => b.interest_rate - a.interest_rate);
     const sortedByBalance = [...debts].sort((a, b) => b.balance - a.balance);
-    
+
     return {
       totalDebt,
       totalMinimumPayment,
       weightedAverageAPR,
-      highestAPR: sortedByAPR[0],
-      lowestAPR: sortedByAPR[sortedByAPR.length - 1],
-      highestBalance: sortedByBalance[0]
+      highestAPR: sortedByAPR[0] || null,
+      lowestAPR: sortedByAPR[sortedByAPR.length - 1] || null,
+      highestBalance: sortedByBalance[0] || null
     };
   }
 
@@ -218,7 +218,7 @@ export class DebtService {
       recommendations.push('Your debt-to-income ratio is high. Consider debt consolidation or speak with a financial advisor.');
     }
     
-    if (analysis.highestAPR.interest_rate > 20) {
+    if (analysis.highestAPR && analysis.highestAPR.interest_rate > 20) {
       recommendations.push(`Focus on paying off ${analysis.highestAPR.name} first - it has a very high interest rate of ${analysis.highestAPR.interest_rate}%.`);
     }
     

@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/ui/sidebar';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 export default function DashboardLayout({
   children,
@@ -7,7 +8,9 @@ export default function DashboardLayout({
 }) {
   return (
     <Sidebar>
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
     </Sidebar>
   );
 }

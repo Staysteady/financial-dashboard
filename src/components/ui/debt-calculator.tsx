@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  CreditCardIcon, 
+import {
+  CreditCardIcon,
   CalculatorIcon,
-  TrendingDownIcon,
+  ArrowTrendingDownIcon,
   ClockIcon,
-  DollarSignIcon,
+  CurrencyDollarIcon,
   PlusIcon,
   TrashIcon,
-  Lightbulb
-} from 'lucide-react';
+  LightBulbIcon
+} from '@heroicons/react/24/outline';
 import { 
   BarChart, 
   Bar, 
@@ -242,7 +242,7 @@ export function DebtCalculator({ userId }: DebtCalculatorProps) {
       <div className="flex space-x-4 border-b border-gray-200">
         {[
           { id: 'comparison', name: 'Strategy Comparison', icon: CalculatorIcon },
-          { id: 'snowball', name: 'Debt Snowball', icon: TrendingDownIcon },
+          { id: 'snowball', name: 'Debt Snowball', icon: ArrowTrendingDownIcon },
           { id: 'avalanche', name: 'Debt Avalanche', icon: ClockIcon }
         ].map((strategy) => (
           <button
@@ -266,7 +266,7 @@ export function DebtCalculator({ userId }: DebtCalculatorProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingDownIcon className="h-5 w-5 text-blue-600" />
+                <ArrowTrendingDownIcon className="h-5 w-5 text-blue-600" />
                 Debt Snowball Method
               </CardTitle>
               <p className="text-sm text-gray-600">Pay off smallest balances first for psychological wins</p>
@@ -414,7 +414,7 @@ export function DebtCalculator({ userId }: DebtCalculatorProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            <LightBulbIcon className="h-5 w-5 text-yellow-500" />
             Personalized Recommendations
           </CardTitle>
         </CardHeader>
@@ -422,7 +422,7 @@ export function DebtCalculator({ userId }: DebtCalculatorProps) {
           <div className="space-y-3">
             {recommendations.map((recommendation, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
-                <Lightbulb className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                <LightBulbIcon className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-gray-700">{recommendation}</p>
               </div>
             ))}

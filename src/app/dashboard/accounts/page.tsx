@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import { 
   BanknotesIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
+  PlusIcon,
   EllipsisHorizontalIcon,
   EyeIcon,
   EyeSlashIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon
+  ArrowTrendingDownIcon,
+  CreditCardIcon,
+  ChartBarIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 
@@ -29,12 +31,84 @@ interface Account {
   changePercent?: number;
 }
 
-interface AccountCardProps {
-  account: Account;
-  showBalance?: boolean;
-  onToggleVisibility?: () => void;
-  onViewDetails?: (accountId: string) => void;
-}
+const mockAccounts: Account[] = [
+  {
+    id: '1',
+    name: 'HSBC Current Account',
+    type: 'current',
+    balance: 2450.32,
+    currency: 'GBP',
+    lastUpdated: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    isActive: true,
+    provider: 'HSBC',
+    accountNumber: '12345678',
+    sortCode: '40-47-84',
+    change24h: 125.50,
+    changePercent: 5.4
+  },
+  {
+    id: '2',
+    name: 'Revolut Business',
+    type: 'current',
+    balance: 8750.00,
+    currency: 'GBP',
+    lastUpdated: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    isActive: true,
+    provider: 'Revolut',
+    accountNumber: '87654321',
+    change24h: -45.20,
+    changePercent: -0.5
+  },
+  {
+    id: '3',
+    name: 'Savings Account',
+    type: 'savings',
+    balance: 15000.00,
+    currency: 'GBP',
+    lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    provider: 'Atom Bank',
+    accountNumber: '11223344',
+    change24h: 12.50,
+    changePercent: 0.08
+  },
+  {
+    id: '4',
+    name: 'Investment ISA',
+    type: 'investment',
+    balance: 25000.00,
+    currency: 'GBP',
+    lastUpdated: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    provider: 'Hargreaves Lansdown',
+    accountNumber: '55667788',
+    change24h: 450.00,
+    changePercent: 1.8
+  }
+];
+
+const formatCurrency = (amount: number, currency: string = 'GBP') => {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+  }).format(amount);
+};
+
+const formatLastUpdated = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
 
 const getAccountIcon = (type: Account['type']) => {
   switch (type) {
@@ -45,7 +119,7 @@ const getAccountIcon = (type: Account['type']) => {
     case 'investment':
       return ChartBarIcon;
     case 'credit':
-      return BanknotesIcon;
+      return CreditCardIcon;
     default:
       return BanknotesIcon;
   }
@@ -66,48 +140,10 @@ const getAccountTypeColor = (type: Account['type']) => {
   }
 };
 
-const formatCurrency = (amount: number, currency: string = 'GBP') => {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
-
-const formatLastUpdated = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-  if (diffInMinutes < 1) return 'Just now';
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-  // Use consistent locale formatting to prevent hydration mismatch
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-};
-
-export function AccountCard({ 
-  account, 
-  showBalance = true, 
-  onToggleVisibility,
-  onViewDetails 
-}: AccountCardProps) {
-  const [isBalanceVisible, setIsBalanceVisible] = useState(showBalance);
+function AccountCard({ account }: { account: Account }) {
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const Icon = getAccountIcon(account.type);
   const typeColorClass = getAccountTypeColor(account.type);
-
-  const handleToggleVisibility = () => {
-    setIsBalanceVisible(!isBalanceVisible);
-    onToggleVisibility?.();
-  };
-
-  const handleViewDetails = () => {
-    onViewDetails?.(account.id);
-  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -124,7 +160,7 @@ export function AccountCard({
         
         <div className="flex items-center space-x-2">
           <button
-            onClick={handleToggleVisibility}
+            onClick={() => setIsBalanceVisible(!isBalanceVisible)}
             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
             title={isBalanceVisible ? "Hide balance" : "Show balance"}
           >
@@ -134,10 +170,7 @@ export function AccountCard({
               <EyeIcon className="h-4 w-4" />
             )}
           </button>
-          <button 
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-            onClick={handleViewDetails}
-          >
+          <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
             <EllipsisHorizontalIcon className="h-4 w-4" />
           </button>
         </div>
@@ -202,48 +235,30 @@ export function AccountCard({
             </span>
           </div>
         </div>
-
-        {/* Status Bar */}
-        {account.type === 'credit' && account.availableBalance && (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-gray-600 mb-1">
-              <span>Used</span>
-              <span>Limit</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full"
-                style={{
-                  width: `${(Math.abs(account.balance) / account.availableBalance) * 100}%`
-                }}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-interface AccountOverviewProps {
-  accounts: Account[];
-  onAddAccount?: () => void;
-  onViewAccount?: (accountId: string) => void;
-}
-
-export function AccountOverview({ accounts, onAddAccount, onViewAccount }: AccountOverviewProps) {
-  const totalBalance = accounts.reduce((sum, account) => {
-    if (account.type === 'credit') {
-      return sum - Math.abs(account.balance); // Credit balances are typically negative
-    }
-    return sum + account.balance;
-  }, 0);
-
-  const activeAccounts = accounts.filter(account => account.isActive);
+export default function AccountsPage() {
+  const totalBalance = mockAccounts.reduce((sum, account) => sum + account.balance, 0);
+  const activeAccounts = mockAccounts.filter(account => account.isActive);
 
   return (
     <div className="space-y-6">
-      {/* Summary Header */}
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Accounts</h1>
+          <p className="text-gray-600">Manage your connected bank accounts</p>
+        </div>
+        <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <PlusIcon className="h-4 w-4" />
+          <span>Add Account</span>
+        </button>
+      </div>
+
+      {/* Summary Stats */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
@@ -254,24 +269,16 @@ export function AccountOverview({ accounts, onAddAccount, onViewAccount }: Accou
             </p>
           </div>
           <div className="text-right">
-            <button
-              onClick={onAddAccount}
-              className="bg-white/20 hover:bg-white/30 transition-colors rounded-lg px-4 py-2 text-sm font-medium"
-            >
-              Add Account
-            </button>
+            <div className="text-sm text-blue-100">Last updated</div>
+            <div className="text-lg font-semibold">Just now</div>
           </div>
         </div>
       </div>
 
-      {/* Account Cards Grid */}
+      {/* Account Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {accounts.map((account) => (
-          <AccountCard
-            key={account.id}
-            account={account}
-            onViewDetails={onViewAccount}
-          />
+        {mockAccounts.map((account) => (
+          <AccountCard key={account.id} account={account} />
         ))}
       </div>
     </div>
