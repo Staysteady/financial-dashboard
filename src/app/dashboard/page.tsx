@@ -1,4 +1,6 @@
 'use client';
+import { useState } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { AccountOverview } from '@/components/ui/account-card';
 import { TransactionList } from '@/components/ui/transaction-list';
 import { 
@@ -12,6 +14,9 @@ import {
 import { FinancialProjections } from '@/components/ui/financial-projections';
 
 export default function DashboardPage() {
+  // State for collapsible transaction section
+  const [isTransactionSectionExpanded, setIsTransactionSectionExpanded] = useState(true);
+
   // Mock data for initial display
   const mockStats = {
     totalBalance: 45750.32,
@@ -298,16 +303,72 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Recent Transactions */}
+        {/* Recent Transactions - Collapsible */}
         <div className="mb-8">
-          <TransactionList
-            transactions={transformedTransactions}
-            accounts={mockAccountOptions}
-            categories={mockCategories}
-            onTransactionClick={(transaction) => console.log('Transaction clicked:', transaction)}
-            showFilters={true}
-            compact={false}
-          />
+          <div className="bg-white rounded-lg shadow-sm">
+            {/* Transaction Section Header */}
+            <div 
+              className="flex items-center justify-between p-6 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setIsTransactionSectionExpanded(!isTransactionSectionExpanded)}
+            >
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+                <p className="text-sm text-gray-600">
+                  {transformedTransactions.length} transactions • Last updated {new Date().toLocaleTimeString()}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">
+                  {isTransactionSectionExpanded ? 'Hide' : 'Show'}
+                </span>
+                {isTransactionSectionExpanded ? (
+                  <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                )}
+              </div>
+            </div>
+            
+            {/* Collapsible Transaction Content */}
+            {isTransactionSectionExpanded && (
+              <div className="animate-in slide-in-from-top-2 duration-200">
+                <TransactionList
+                  transactions={transformedTransactions}
+                  accounts={mockAccountOptions}
+                  categories={mockCategories}
+                  onTransactionClick={(transaction) => console.log('Transaction clicked:', transaction)}
+                  showFilters={true}
+                  compact={false}
+                />
+              </div>
+            )}
+            
+            {/* Collapsed State Quick Summary */}
+            {!isTransactionSectionExpanded && (
+              <div className="p-6 bg-gray-50 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-semibold text-green-600">
+                      £{transformedTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-600">Income This Month</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-semibold text-red-600">
+                      £{Math.abs(transformedTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-600">Expenses This Month</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-semibold text-blue-600">
+                      {transformedTransactions.slice(0, 10).length}
+                    </p>
+                    <p className="text-sm text-gray-600">Recent Transactions</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Financial Charts */}
